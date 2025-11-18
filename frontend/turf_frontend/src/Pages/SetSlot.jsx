@@ -10,6 +10,7 @@ const SetSlot = () => {
     const [message, setMessage] = useState("");
     const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState(null);
+    const [deselectedSlot , setDeselectedSlot] = useState(null);
 
 
 
@@ -17,7 +18,6 @@ const SetSlot = () => {
         setLoading(true);
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/${turfid}`);
-
             // Check if the response contains the "No slots found" message
             if (response.data === "No slots found for the given turf!") {
                 setMessage("No slots found for the given turf.");
@@ -73,6 +73,7 @@ const SetSlot = () => {
         setSlots(updatedSlots);
 
         try {
+            console.log(slots);
             const response = await axios.put(`${import.meta.env.VITE_API_URL}/admin/${turfid}?date=${selectedSlot.date}&time=${selectedSlot.time}`);
             setMessage(response.data);
         } catch (error) {
@@ -201,14 +202,14 @@ const SetSlot = () => {
                                             background: s.status === "available" ? "linear-gradient(135deg, #00d4ff, #007bff)" : "linear-gradient(135deg, #f44336, #e53935)",
                                             color: "#fff",
                                             textAlign: "center",
-                                            cursor: s.status === "booked" ? "not-allowed" : "pointer",
+//                                             cursor: s.status === "booked" ? "not-allowed" : "pointer",
                                             boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
                                             transition: "all 0.3s ease-in-out",
                                             fontWeight: "bold",
                                         }}
-                                        onClick={() => s.status !== "booked" && toggleSlotStatus(slot.date, s.time)}
+                                        onClick={() => toggleSlotStatus(slot.date, s.time)}
                                         onMouseEnter={(e) => {
-                                            e.target.style.background = s.status === "available" ? "linear-gradient(135deg, #007bff, #0056b3)" : "linear-gradient(135deg, #e53935, #c62828)";
+                                            e.target.style.background = s.status === "available" ? "linear-gradient(135deg, #007bff, #0056b3)" : "linear-gradient(135deg, #e53935, #c62828)";//
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = s.status === "available" ? "linear-gradient(135deg, #00d4ff, #007bff)" : "linear-gradient(135deg, #f44336, #e53935)";
@@ -248,7 +249,7 @@ const SetSlot = () => {
                             textAlign: "center",
                         }}
                     >
-                        <p>Are you sure you want to mark this slot as "booked"?</p>
+                        <p>Are you sure you want to change the status of this slot?</p>
                         <button
                             onClick={confirmChangeStatus}
                             style={{

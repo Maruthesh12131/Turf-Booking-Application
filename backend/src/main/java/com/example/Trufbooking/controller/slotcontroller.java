@@ -42,6 +42,7 @@ public class slotcontroller {
     @PutMapping("/update-dates")
     public ResponseEntity<String> updateDates() {
         try {
+            System.out.println("When user clicks setSlot daily this also gets trigger");
             slotser.updateDatesWithCurrentDate();
             return ResponseEntity.ok("Dates updated successfully.");
         } catch (Exception e) {

@@ -158,7 +158,6 @@ public class turfownerController {
 
     @GetMapping("/{turfid}")
     public String getSlotsForTurf(@PathVariable int turfid) {
-        System.out.println("When i click setslots if slots are there then this will trigger");
         return slotser.getSlotsForTurf(turfid);
     }
 

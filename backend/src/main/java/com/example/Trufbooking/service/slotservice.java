@@ -1,8 +1,10 @@
 package com.example.Trufbooking.service;
 
+import com.example.Trufbooking.entity.Booking;
 import com.example.Trufbooking.entity.admintable;
 import com.example.Trufbooking.entity.slot;
 import com.example.Trufbooking.entity.slotdto;
+import com.example.Trufbooking.repository.Bookingrepo;
 import com.example.Trufbooking.repository.admintable_repo;
 import com.example.Trufbooking.repository.slotrepo;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import jdk.swing.interop.SwingInterOpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,8 @@ public class slotservice {
     slotrepo slotrepo;
     @Autowired
     admintable_repo adminrepo;
-
+    @Autowired
+    Bookingrepo bookingRepository;
 //    @PostConstruct
 //    public void init() {
 //        System.out.println("SlotUpdater initialized!");
@@ -54,13 +58,14 @@ public class slotservice {
     public void updateDatesWithCurrentDate() {
         // Get today's date and day after tomorrow's date
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date today = new Date();
+
 
         Calendar cal = Calendar.getInstance();
+        Date today = new Date();
         cal.setTime(today);
 
         // Calculate the day after tomorrow
-        cal.add(Calendar.DATE, 2);
+        cal.add(Calendar.DATE, 7);
         String dayAfterTomorrow = sdf.format(cal.getTime());
 
         // Create the new JSON object for the day after tomorrow
@@ -91,6 +96,7 @@ public class slotservice {
 
     @Scheduled(cron = "0 0 0 * * ?")  // This will run at midnight every day
     public void updateTodaysDateAutomatically() {
+        System.out.println("Updates Here ??");
         updateDatesWithCurrentDate();
     }
 
@@ -105,7 +111,7 @@ public class slotservice {
 
         LocalDate today = LocalDate.now();
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 7; i++) {
             LocalDate date = today.plusDays(i);
 
             List<Map<String, String>> slots = new ArrayList<>();
@@ -131,6 +137,7 @@ public class slotservice {
         slotrepo.save(slotDetail);
         return "Slots generated and saved successfully!";
     }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String getSlotsForTurf(int turfid) {
         Optional<slot> slotDetailOptional = slotrepo.findByTurfId(turfid);
@@ -141,7 +148,7 @@ public class slotservice {
         return slotDetailOptional.get().getTime(); // Return JSON data
     }
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
 
     public boolean confirmSlot(int turfId, String date, String time) {
         Optional<slot> slotOpt = slotrepo.findByTurfId(turfId);
@@ -167,12 +174,46 @@ public class slotservice {
                                 slotrepo.save(slot);
                                 return true;
                             }
+                            else if(time.equals(slotDetails.get("time"))&& "booked".equals(slotDetails.get("status"))){
+                                System.out.println("Date Selected by admin "+ date);
+                                System.out.println("Time selected by admin "+ time);
+                                List<Booking> userBooked =  bookingRepository.getUserBooking();
+                                for(int i=0;i<userBooked.size();i++){
+                                    boolean check = false;
+                                    System.out.println("User Selected date"+userBooked.get(i).getDate());
+                                    if(userBooked.get(i).getDate().equals(date)){
+                                        Booking timeSlot = userBooked.get(i);
+                                        System.out.println("Admin selected date"+ date + "="+"user selected date "+ userBooked.get(i).getDate());
+                                        List<String> usersTimeSlotBooked = timeSlot.getTime();
+                                        for(int j=0;j<usersTimeSlotBooked.size();j++){
+                                            if(usersTimeSlotBooked.get(j).equals(time)){
+                                                System.out.println("Slot details: slot time"+ slotDetails.get("time")+" , slot status"+ slotDetails.get("status"));
+                                                slotDetails.put("status","booked");
+                                                String updatedTimeJson = objectMapper.writeValueAsString(slotsData);
+                                                slot.setTime(updatedTimeJson);
+                                                slotrepo.save(slot);
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                    if(check == false){
+                                        slotDetails.put("status","available");
+                                        String updatedTimeJson = objectMapper.writeValueAsString(slotsData);
+                                        slot.setTime(updatedTimeJson);
+                                        slotrepo.save(slot);
+                                    }
+                                }
+
+
+                                return true;
+                            }
                         }
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
         }
         return false;
     }

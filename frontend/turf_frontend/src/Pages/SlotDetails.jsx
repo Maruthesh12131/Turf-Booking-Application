@@ -14,8 +14,6 @@ function SlotSelection() {
             .get(`${import.meta.env.VITE_API_URL}/home/${turfId}`)
             .then((response) => {
                 const { turfDetails, availableSlots } = response.data;
-                console.log("Turf Details:", turfDetails);
-                console.log("Available Slots:", availableSlots);
 
                 localStorage.setItem("turfDetails", JSON.stringify(turfDetails));
                 setAvailableSlots(availableSlots);
