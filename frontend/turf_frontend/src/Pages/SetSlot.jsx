@@ -11,19 +11,27 @@ const SetSlot = () => {
     const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [deselectedSlot , setDeselectedSlot] = useState(null);
-
-
-
+    const [adminControl, setAdminControl] = useState({
+        slotTimings: '',
+        bookingList:[]
+        });
+    const [bookingList,setBookingList] = useState([]);
+    const showList = false;
     const fetchSlots = async () => {
         setLoading(true);
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/${turfid}`);
             // Check if the response contains the "No slots found" message
-            if (response.data === "No slots found for the given turf!") {
+            console.log(response.data);
+            console.log(response.data.slotTimings);
+            console.log(response.data.bookingList);
+            setAdminControl(response.data);
+            if (response.data.slotTimings === null) {
                 setMessage("No slots found for the given turf.");
                 setSlots([]);  // Optionally set an empty array for slots
             } else {
-                setSlots(response.data);  // Set the fetched slot data
+                setSlots(response.data.slotTimings);  // Set the fetched slot data
+                setBookingList(response.data.bookingList);
             }
 
             setLoading(false);
@@ -52,40 +60,55 @@ const SetSlot = () => {
 
 
     const toggleSlotStatus = async (date, time) => {
-        setSelectedSlot({ date, time });
-        setConfirmDialogVisible(true);
-    };
-
-    const confirmChangeStatus = async () => {
-        setConfirmDialogVisible(false);
-        const updatedSlots = slots.map(slot => {
-            if (slot.date === selectedSlot.date) {
-                slot.slots = slot.slots.map(s => {
-                    if (s.time === selectedSlot.time) {
-                        s.status = s.status === "available" ? "booked" : "available";
-                    }
-                    return s;
-                });
-            }
-            return slot;
-        });
-
-        setSlots(updatedSlots);
-
-        try {
-            console.log(slots);
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/admin/${turfid}?date=${selectedSlot.date}&time=${selectedSlot.time}`);
-            setMessage(response.data);
-        } catch (error) {
-            console.error("Error updating slot status:", error);
-            setMessage("Error updating slot status.");
+        if(bookingList.length === 0){
+            setSelectedSlot({ date, time });
+            setConfirmDialogVisible(true);
         }
+        else{
+            let check = false;
+            bookingList.forEach(booking => {
+                if(booking.date === date){
+                    booking.time.forEach( times =>{
+                        if(times === time){
+                            check = true;
+                            }
+                        });
+                    }
+                });
+            if(check === false){
+                setSelectedSlot({ date, time });
+                setConfirmDialogVisible(true);
+            }
+                            }
+//         setSelectedSlot({ date, time });
+//         setConfirmDialogVisible(true);
     };
 
+    const confirmChangeStatus = async() =>{
+        setConfirmDialogVisible(false);
+            const updatedSlots = slots.map(slot => {
+                if (slot.date === selectedSlot.date) {
+                    slot.slots = slot.slots.map(s => {
+                        if (s.time === selectedSlot.time) {
+                            s.status = s.status === "available" ? "booked" : "available";
+                        }
+                        return s;
+                    });
+                }
+                return slot;
+            });
+        setSlots(updatedSlots);
+        try {
+                const response = await axios.put(`${import.meta.env.VITE_API_URL}/admin/${turfid}?date=${selectedSlot.date}&time=${selectedSlot.time}`);
+                setMessage(response.data);
+            } catch (error) {
+                    console.error("Error updating slot status:", error);
+                    setMessage("Error updating slot status.");
+            }
+    }
     const cancelChangeStatus = () => {
         setConfirmDialogVisible(false);
     };
-
     useEffect(() => {
         fetchSlots();
     }, [turfid]);
@@ -202,7 +225,6 @@ const SetSlot = () => {
                                             background: s.status === "available" ? "linear-gradient(135deg, #00d4ff, #007bff)" : "linear-gradient(135deg, #f44336, #e53935)",
                                             color: "#fff",
                                             textAlign: "center",
-//                                             cursor: s.status === "booked" ? "not-allowed" : "pointer",
                                             boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
                                             transition: "all 0.3s ease-in-out",
                                             fontWeight: "bold",

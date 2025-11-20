@@ -1,6 +1,7 @@
 package com.example.Trufbooking.controller;
 
 
+import com.example.Trufbooking.entity.AdminControlDTO;
 import com.example.Trufbooking.entity.admintable;
 import com.example.Trufbooking.entity.turfowner;
 import com.example.Trufbooking.repository.turfownerRepo;
@@ -157,9 +158,11 @@ public class turfownerController {
     }
 
     @GetMapping("/{turfid}")
-    public String getSlotsForTurf(@PathVariable int turfid) {
+    public AdminControlDTO getSlotsForTurf(@PathVariable int turfid) {
+        System.out.println(slotser.getSlotsForTurf(turfid).getSlotTimings());
         return slotser.getSlotsForTurf(turfid);
     }
+
 
     @PutMapping("/{turfId}")
     public ResponseEntity<String> confirmSlot(

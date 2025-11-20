@@ -1,9 +1,6 @@
 package com.example.Trufbooking.service;
 
-import com.example.Trufbooking.entity.Booking;
-import com.example.Trufbooking.entity.admintable;
-import com.example.Trufbooking.entity.slot;
-import com.example.Trufbooking.entity.slotdto;
+import com.example.Trufbooking.entity.*;
 import com.example.Trufbooking.repository.Bookingrepo;
 import com.example.Trufbooking.repository.admintable_repo;
 import com.example.Trufbooking.repository.slotrepo;
@@ -139,25 +136,48 @@ public class slotservice {
     }
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String getSlotsForTurf(int turfid) {
+    public AdminControlDTO getSlotsForTurf(int turfid) {
+
         Optional<slot> slotDetailOptional = slotrepo.findByTurfId(turfid);
-        //System.out.println(slotrepo.findByTurfId(turfid).get());
-        if (!slotDetailOptional.isPresent()) {
-            return "No slots found for the given turf!";
+        if(!slotDetailOptional.isPresent()){
+            AdminControlDTO adminControl = new AdminControlDTO();
+            List<Map<String,Object>> slotTimings = null;
+            List<Booking> bookingDetails = null;
+            adminControl.setSlotTimings(slotTimings);
+            adminControl.setBookingList(bookingDetails);
+            return adminControl;
         }
-        return slotDetailOptional.get().getTime(); // Return JSON data
+        else{
+            // if the slot is present inside the slot repo
+            AdminControlDTO adminControl = new AdminControlDTO();
+            slot slotDetails = slotDetailOptional.get();
+            String slotTimings = slotDetails.getTime();
+            try {
+                List<Map<String,Object>> slotConvert = objectMapper.readValue(slotTimings,List.class);
+                List<Booking> bookingDetails = bookingRepository.getUserBooking(turfid);
+                adminControl.setSlotTimings(slotConvert); // gives slots allocated for that turf
+                adminControl.setBookingList(bookingDetails); // gives slots booked by users only
+                return adminControl; // contain two lists 1) contains slots of that turf 2) contains slots booked by all the users
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+
     }
 
 
 
     public boolean confirmSlot(int turfId, String date, String time) {
-        Optional<slot> slotOpt = slotrepo.findByTurfId(turfId);
-        if (slotOpt.isPresent()) {
-            slot slot = slotOpt.get();
+        System.out.println(time);
+        Optional<slot> slotOpt = slotrepo.findByTurfId(turfId); // gets slot on the basis of turfId
+        if (slotOpt.isPresent()) { // checks whether slots are allocated for that turf
+            slot slot = slotOpt.get(); // if yes get slot of that turf
 
             try {
                 // Assuming the slot's time column contains the JSON data as a String
-                String timeJson = slot.getTime();
+                String timeJson = slot.getTime(); // slot timing
                 List<Map<String, Object>> slotsData = objectMapper.readValue(timeJson, List.class);
 
                 for (Map<String, Object> dateSlot : slotsData) {
@@ -174,37 +194,12 @@ public class slotservice {
                                 slotrepo.save(slot);
                                 return true;
                             }
-                            else if(time.equals(slotDetails.get("time"))&& "booked".equals(slotDetails.get("status"))){
-                                System.out.println("Date Selected by admin "+ date);
-                                System.out.println("Time selected by admin "+ time);
-                                List<Booking> userBooked =  bookingRepository.getUserBooking();
-                                for(int i=0;i<userBooked.size();i++){
-                                    boolean check = false;
-                                    System.out.println("User Selected date"+userBooked.get(i).getDate());
-                                    if(userBooked.get(i).getDate().equals(date)){
-                                        Booking timeSlot = userBooked.get(i);
-                                        System.out.println("Admin selected date"+ date + "="+"user selected date "+ userBooked.get(i).getDate());
-                                        List<String> usersTimeSlotBooked = timeSlot.getTime();
-                                        for(int j=0;j<usersTimeSlotBooked.size();j++){
-                                            if(usersTimeSlotBooked.get(j).equals(time)){
-                                                System.out.println("Slot details: slot time"+ slotDetails.get("time")+" , slot status"+ slotDetails.get("status"));
-                                                slotDetails.put("status","booked");
-                                                String updatedTimeJson = objectMapper.writeValueAsString(slotsData);
-                                                slot.setTime(updatedTimeJson);
-                                                slotrepo.save(slot);
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                    if(check == false){
-                                        slotDetails.put("status","available");
-                                        String updatedTimeJson = objectMapper.writeValueAsString(slotsData);
-                                        slot.setTime(updatedTimeJson);
-                                        slotrepo.save(slot);
-                                    }
-                                }
-
-
+                            else if(time.equals(slotDetails.get("time")) && "booked".equals(slotDetails.get("status"))){
+                                System.out.println("Time selected by admin"+ time);
+                                slotDetails.put("status","available");
+                                String updatedTimeJson = objectMapper.writeValueAsString(slotsData);
+                                slot.setTime(updatedTimeJson);  // Update the slot with new JSON
+                                slotrepo.save(slot);
                                 return true;
                             }
                         }
@@ -217,6 +212,43 @@ public class slotservice {
         }
         return false;
     }
+
+//    public boolean confirmSlot(int turfId, String date, String time) {
+//        Optional<slot> slotOpt = slotrepo.findByTurfId(turfId);
+//        if (slotOpt.isPresent()) {
+//            slot slot = slotOpt.get();
+//
+//            try {
+//                // Assuming the slot's time column contains the JSON data as a String
+//                String timeJson = slot.getTime();
+//                List<Map<String, Object>> slotsData = objectMapper.readValue(timeJson, List.class);
+//
+//                for (Map<String, Object> dateSlot : slotsData) {
+//                    if (date.equals(dateSlot.get("date"))) {
+//                        List<Map<String, String>> slotList = (List<Map<String, String>>) dateSlot.get("slots");
+//                        for (Map<String, String> slotDetails : slotList) {
+//                            if (time.equals(slotDetails.get("time")) && "available".equals(slotDetails.get("status"))) {
+//                                // Update the slot's status to "booked"
+//                                slotDetails.put("status", "booked");
+//
+//                                // Convert the modified list back to a JSON string
+//                                String updatedTimeJson = objectMapper.writeValueAsString(slotsData);
+//                                slot.setTime(updatedTimeJson);  // Update the slot with new JSON
+//                                slotrepo.save(slot);
+//                                return true;
+//                            }
+//                            else{
+//
+//                            }
+//                        }
+//                    }
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return false;
+//    }
 
     public boolean cancelSlot(int turfId, String date, List<String> times) {
         LocalDate currentDate = LocalDate.now();

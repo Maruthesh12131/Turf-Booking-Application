@@ -19,7 +19,7 @@ public interface Bookingrepo extends JpaRepository<Booking, Integer> {
 //    Booking findByBookingId(@Param("bookingId") int bookingId);
 
     //List<Booking> findAllById(int bookingId);
-    @Query("SELECT b FROM Booking b WHERE b.payedAmt IS NOT NULL")
-    List<Booking> getUserBooking();
+    @Query("SELECT b FROM Booking b WHERE b.turfid = :turfid")
+    List<Booking> getUserBooking(@Param("turfid") int turfid); // this will give all the slots booked by the users for that turf
 }
 
