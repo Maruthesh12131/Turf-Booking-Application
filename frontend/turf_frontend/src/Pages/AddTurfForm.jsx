@@ -15,27 +15,30 @@ const AddTurfForm = () => {
     const [image, setImage] = useState(null);
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
-
+    const [mySports , setMySports] = useState([]);
+    const [sport,setSport] = useState('');
     const adminId = localStorage.getItem('adminId');
-
+    const [totalSports,setTotalSports] = useState(["Cricket","Football","Basketball","Badminton","Volleyball","Tennis"]);
     const handleFormSubmit = async (event) => {
         event.preventDefault();
         console.log(sports);
         const sportsList = sports.split(",").map((s)=> s.trim()).filter((s)=> s!=="");
         console.log(sportsList);
+        console.log(mySports);
         const formData = new FormData();
         formData.append('admin_id', adminId);
         formData.append('turfname', turfname);
         formData.append('location', location);
         formData.append('mobilenumber', mobilenumber);
         formData.append('price', price);
-        formData.append('sports', JSON.stringify(sportsList));
+        formData.append('sports', JSON.stringify(mySports));
 //         console.log(JSON.stringify(sportsList);
         formData.append('length', length);
         formData.append('breadth', breadth);
         if (image) {
             formData.append('image', image);
         }
+        console.log(formData);
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/admin/addturf`, formData, {
@@ -57,7 +60,46 @@ const AddTurfForm = () => {
         navigate('/adminlogin');
     };
 
+    const handleSportsTable =(sports) =>{
+        console.log(mySports)
+        if(sports!=="Select Sports"){
+            setSport(sports);
+            setTotalSports((prev) =>(prev.filter((prev)=>(prev!== sports))));
+            setMySports((prev)=>[...prev,sports]);
+        }
+    };
+
+    const handleRemove = (s) =>{
+        console.log(s);
+        setSport("Select Sport");
+        setTotalSports((prev)=>[...prev,s]);
+        setMySports((prev)=>(prev.filter((prev) =>(prev!==s))));
+        };
+
     const styles = {
+        dropdownStyleContainer:{
+                marginTop: '20px',
+                width: '100%',
+                maxWidth: '200px',
+        },
+        dropdownStyle:{
+            padding: "12px 15px",
+            fontSize: "20px",
+            width: "100%",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            backgroundColor: "rgb(0,188,212)",
+            color: "black",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            fontFamily: "bold",
+            maxHeight: "50px", // Keep this as it is
+            overflowY: "auto", // Enables scrolling when the list is longer than the select box
+            WebkitAppearance: "none", // Removes default dropdown icon in webkit browsers like Chrome
+            MozAppearance: "none", // Removes default dropdown icon in Firefox
+            },
+
         page: {
             backgroundImage: `url(${BG})`,
             backgroundSize: 'cover',
@@ -161,6 +203,15 @@ const AddTurfForm = () => {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: '999',
         },
+        Row: {
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: "#2d2d3a",
+                padding: "10px 15px",
+                borderRadius: "8px",
+                marginBottom: "10px",
+            },
         '@keyframes fade-in-out': {
             '0%': { opacity: 0 },
             '10%': { opacity: 1 },
@@ -168,6 +219,7 @@ const AddTurfForm = () => {
             '100%': { opacity: 0 },
         },
     };
+
 
     return (
         <div style={styles.page}>
@@ -224,15 +276,44 @@ const AddTurfForm = () => {
                             style={styles.input}
                         />
                     </div>
+{/*                     <div> */}
+{/*                         <label style={styles.label}>Sports (eg : ["Cricket","Football"]):</label> */}
+{/*                         <input */}
+{/*                             type="text" */}
+{/*                             value={sports} */}
+{/*                             onChange={(e) => setSports(e.target.value)} */}
+{/*                             required */}
+{/*                             style={styles.input} */}
+{/*                         /> */}
+{/*                     </div> */}
                     <div>
-                        <label style={styles.label}>Sports (eg : ["Cricket","Football"]):</label>
-                        <input
-                            type="text"
-                            value={sports}
-                            onChange={(e) => setSports(e.target.value)}
-                            required
-                            style={styles.input}
-                        />
+                        <label style={styles.label}>Sports</label>
+                        <select
+                            style ={styles.dropdownStyle}
+                            value ={sport}
+                            onChange ={(e) =>handleSportsTable(e.target.value)}
+                            >
+                        <option> Select Sports </option>
+                        {totalSports.map((sportss,index) =>(
+                            <option key={index} value= {sportss}>
+                                {sportss}
+                            </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                     {mySports.length>0?(
+                         <div>
+                             {
+                                 mySports.map((s,index)=>(
+                                     <div key={index} style={styles.Row}>
+                                         <div> {s}</div>
+                                         <button onClick= { ()=>handleRemove(s)} > Remove </button>
+                                     </div>
+                                 ))
+                             }
+                         </div>
+                     ):(<p> No Sports Available</p>)}
                     </div>
                     <div>
                         <label style={styles.label}>Length (in metres):</label>

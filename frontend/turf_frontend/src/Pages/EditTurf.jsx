@@ -142,6 +142,7 @@ const EditTurf = () => {
         backgroundColor: '#aaa7a7',
         boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
         fontWeight: 'bold',
+        color: "black",
     };
 
     const buttonBaseStyle = {
@@ -216,6 +217,15 @@ const EditTurf = () => {
         100% { opacity: 0; }
     }
 `;
+    const removeButton ={
+        backgroundColor:"#e53935",
+        color: "white",
+
+        }
+
+    const addButton ={
+        backgroundColor:"#27a567",
+        }
 
 
     return (
@@ -273,15 +283,13 @@ const EditTurf = () => {
                         </label>
                         <label>
                             Sports:
-                            <input
-                                type="readOnly"
+                            <p
+
                                 name="sports"
-                                value={turfDetails.sports} //.join(", ")
-                                onChange={handleChange}
-                                //placeholder="Enter sports separated by commas"
-                                required
                                 style={inputStyle}
-                            />
+                            >
+                            {turfDetails.sports.join(",")}
+                            </p>
                         </label>
                         <label>
                             <div>
@@ -296,7 +304,7 @@ const EditTurf = () => {
 
                                     style={inputStyle}
                                 />
-                                <button onClick={handleAddSport}> Add Sport </button>
+                                <button onClick={handleAddSport} style = {addButton}> Add </button>
                             </div>
                         </label>
                         <label>
@@ -309,7 +317,7 @@ const EditTurf = () => {
                                     onChange={handleChange}
                                     style={inputStyle}
                                 />
-                                <button onClick={handleDeleteSport}> Delete Sport </button>
+                                <button onClick={handleDeleteSport} style ={removeButton}> Remove </button>
                             </div>
                         </label>
                         <label>
